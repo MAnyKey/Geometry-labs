@@ -1,0 +1,33 @@
+\documentclass{article}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+\newtheorem{lemm}{Лемма}
+
+\begin{document}
+
+\begin{lemm}
+  Пусть \(G\)~--- множество входных точек.
+  \(min(G)\) принадлежит выпуклой оболочке этих точек.
+\end{lemm}
+\begin{proof}
+  Допустим, что это не так. Тогда существует два случая:
+  \begin{enumerate}
+    \item минимальная точка лежит внутри выпуклой оболочки;
+    \item минимальная точка лежит на границе выпуклой оболочки.
+  \end{enumerate}
+  
+  Рассмотрим первый случай. Исходя из определения выпуклой оболочки (её минимальности) \( \exists p \in G \mid p < min(G) \). Противоречие.
+
+  Рассмотрим второй случай. Тогда
+  \[
+  \exists p_1,p_2 \in G, min(G) \in \overline{p_1p_2}  \mid p_1 < min(G), p_2 < min(G)
+  \]
+  Противоречие.
+  
+\end{proof}
+
+\end{document}
