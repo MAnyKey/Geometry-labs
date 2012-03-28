@@ -41,6 +41,7 @@ void incremental_hull_window::draw(drawer_type & drawer) const
     point_type prev = hull.back();
     for (const auto & p : hull) {
       drawer.draw_line(p, prev);
+      prev = p;
     }
   }
 }
@@ -51,6 +52,11 @@ bool incremental_hull_window::on_double_click(const point_type & pt)
   builder.add_point(pt);
   hull.clear();
   builder.get_current_hull(back_inserter(hull));
+  std::clog << "Hull: " << std::endl;
+  for(const auto & p : hull) {
+    std::clog << p << ' ';
+  }
+  std::clog << std::endl;
   return true;
 }
   

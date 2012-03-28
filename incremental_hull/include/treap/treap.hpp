@@ -8,44 +8,179 @@
 namespace treap
 {
   template<class KeyType>
-  struct treap {
+  struct treap_t {
     typedef treap_node<KeyType> node;
     typedef typename node::shared_treap shared_node;
     typedef std::function<bool (const KeyType &, const KeyType &)> Comp;
     
-    explicit treap(const Comp & _comp = std::less<KeyType>())
+    explicit treap_t(const Comp & _comp = std::less<KeyType>())
       : root_node(node::make_treap())
       , comp(_comp)
     {}
 
         
-    void insert(const KeyType & key);
+    void insert(const KeyType & key)
+    {
+      add(root_node, key);
+    }
+    node * find(const KeyType & _k, bool returns_last_node = false)
+    {
+      return find(root_node, _k, returns_last_node);
+    }
 
-    void shrink_between(const shared_node & left, const shared_node & right);
+    void shrink_to(const node * boundary)
+    {
+      std::clog << __FUNCTION__ << " boundary: " << boundary->value(), << std::endl;
+      if (boundary->prev()) {
+        shared_node junk, t;
+        std::clog << "bounday prev(): " << boundary->prev()->value() << std::endl;
+        split(root_node, boundary->prev()->value(), junk, t);
 
-    void set_comp(const Comp & _comp);
-    void get_comp() const { return comp; }
+        std::clog << "t: ";
+        node::print_node_reference(std::clog, t);
+        std::clog << std::endl;
 
-    node * min_node() const;
+        std::clog << "junk: ";
+        node::print_node_reference(std::clog, junk);
+        std::clog << std::endl;
+        root_node = t;
+      }
+    }
+      
+    void shrink_from(const node * boundary)
+    {
+      std::clog << __FUNCTION__ << " boundary: " << boundary->value() << std::endl;
+      shared_node junk, t;
+      split(root_node, boundary->value(), t, junk);
+
+      std::clog << "t: ";
+      node::print_node_reference(std::clog, t);
+      std::clog << std::endl;
+
+      std::clog << "junk: ";
+      node::print_node_reference(std::clog, junk);
+      std::clog << std::endl;
+      root_node = t;
+    }
+      
+    void shrink_between(const node * left, const node * right)
+    {
+      std::clog << __FUNCTION__ << " left: " << left->value() << " right: " << right->value() << std::endl;
+      // if (comp(left->value(), right->value())) {
+      // [begin... left ... right end]
+      assert(comp(right->value(), left->value()));
+      shared_node tleft, tright, t, junk;
+      std::clog << "left->prev() " << left->prev()->value() << std::endl;
+      split(root_node, left->prev()->value(), t, tleft);
+      
+      std::clog << "tleft: ";
+      node::print_node_reference(std::clog, tleft);
+      std::clog << std::endl;
+        
+      std::clog << "t: ";
+      node::print_node_reference(std::clog, t);
+      std::clog << std::endl;
+
+      split(t, right->value(), tright, junk);
+
+      std::clog << "tright: ";
+      node::print_node_reference(std::clog, tright);
+      std::clog << std::endl;
+      
+      std::clog << "junk: ";
+      node::print_node_reference(std::clog, junk);
+      std::clog << std::endl;
+      
+      root_node = merge(tright, tleft);
+      
+      // split(root_node, left->value(), tleft, t);
+
+      // std::clog << "tleft: ";
+      // node::print_node_reference(std::clog, tleft);
+      // std::clog << std::endl;
+        
+      // std::clog << "t: ";
+      // node::print_node_reference(std::clog, t);
+      // std::clog << std::endl;
+        
+      // if (auto rs = right->prev()) {
+      //   shared_node junk;
+      //   split(t, rs->value(), junk, tright);
+          
+      //   std::clog << "junk: ";
+      //   node::print_node_reference(std::clog, junk);
+      //   std::clog << std::endl;
+
+      //   std::clog << "tright: ";
+      //   node::print_node_reference(std::clog, tright);
+      //   std::clog << std::endl;
+      // }
+      // root_node = merge(tleft, tright);
+      // } else {
+      //   // [begin... right ... left end]
+      //   std::clog << "[begin... right ... left end]\n";
+      //   shared_node t;
+      //   {
+      //     shared_node junk;
+      //     split(root_node, left->value(), t, junk);
+      //     std::clog << "t: ";
+      //     node::print_node_reference(std::clog, t);
+      //     std::clog << std::endl;
+      //     std::clog << "junk: ";
+      //     node::print_node_reference(std::clog, junk);
+      //     std::clog << std::endl;
+      //   }
+      //   if (auto rs = right->prev()) {
+      //     shared_node junk;
+      //     shared_node tright;
+      //     split(t, rs->value(), junk, tright);
+      //     t = tright;
+      //     std::clog << "junk: ";
+      //     node::print_node_reference(std::clog, junk);
+      //     std::clog << std::endl;
+          
+      //     std::clog << "tright: ";
+      //     node::print_node_reference(std::clog, tright);
+      //     std::clog << std::endl;
+      //   }
+      //   root_node = t;
+      // }
+    }
+    void shrink_between(const shared_node & left, const shared_node & right)
+    {
+      shrink_between(left.get(), right.get());
+    }
+
+    void set_comp(const Comp & _comp) { comp = _comp; }
+    const Comp & get_comp() const { return comp; }
+
+    const node * min_node() const { return (root_node) ? root_node->min() : nullptr; }
+    const node * max_node() const { return (root_node) ? root_node->max() : nullptr; }
     const shared_node & root() const { return root_node; }
 
-    friend std::ostream &operator<<(std::ostream & out, const treap & treap)
+    friend std::ostream &operator<<(std::ostream & out, const treap_t & treap)
     {
       node::print_node_reference(out, treap.root());
       return out;
     }
 
+    template<class Func>
+    void for_each(Func f);
+
   private:
 
-    shared_node   add       (shared_node & root, KeyType _k, int priority = priority_source());
-    shared_node   remove    (shared_node & root, KeyType _k);
-           node * find(const shared_node & root, KeyType _k, bool return_last_node = false);
+    static int priority_source() {
+      return rand();
+    }
+
+    shared_node   add       (shared_node & root, const KeyType & _k, int priority = priority_source());
+    shared_node   remove    (shared_node & root, const KeyType & _k);
+           node * find(const shared_node & root, const KeyType & _k, bool returns_last_node = false);
     
     void         split(const shared_node & node, KeyType key, shared_node & out_left, shared_node & out_right);
     shared_node  merge(const shared_node & left, const shared_node & right);
     
-    template<class Func>
-    void for_each(const shared_node & root, Func f);
+    
 
     void internal_add    (shared_node & node, const shared_node & ins);
     void internal_remove (shared_node & node, KeyType _k);
@@ -57,8 +192,8 @@ namespace treap
   };
 
   template<class KeyType>
-  inline void treap<KeyType>::internal_add(treap<KeyType>::shared_node & node, const shared_node & ins)
-  //inline void treap<KeyType>::internal_add(std::shared_ptr<treap_node<KeyType> > & node, const std::shared_ptr<treap_node<KeyType> > & ins)
+  inline void treap_t<KeyType>::internal_add(treap_t<KeyType>::shared_node & node, const shared_node & ins)
+  //inline void treap_t<KeyType>::internal_add(std::shared_ptr<treap_node<KeyType> > & node, const std::shared_ptr<treap_node<KeyType> > & ins)
   {
     if (!node) {
       node = ins;
@@ -80,12 +215,12 @@ namespace treap
   }
 
   template<class KeyType>
-  inline typename treap<KeyType>::shared_node treap<KeyType>::add(treap<KeyType>::shared_node & root, KeyType _k, int priority)
+  inline typename treap_t<KeyType>::shared_node treap_t<KeyType>::add(treap_t<KeyType>::shared_node & root, const KeyType & _k, int priority)
   // inline std::shared_ptr<treap_node<KeyType> >
-  // treap<KeyType>::add(std::shared_ptr<treap_node<KeyType> > & root, KeyType _k, int priority)
+  // treap_t<KeyType>::add(std::shared_ptr<treap_node<KeyType> > & root, KeyType _k, int priority)
   {
     if (find(root, _k) == nullptr) {
-      auto mid = std::make_shared<treap_node>(_k, priority);
+      auto mid = std::make_shared<node>(_k, priority);
       internal_add(root, mid);
     }
     return root;
@@ -99,8 +234,8 @@ namespace treap
   }
 
   template<class KeyType>
-  inline void treap<KeyType>::internal_remove(treap<KeyType>::shared_node & node, KeyType _k)
-  //inline void treap<KeyType>::internal_remove(std::shared_ptr<treap_node<KeyType> > & node, KeyType _k)
+  inline void treap_t<KeyType>::internal_remove(treap_t<KeyType>::shared_node & node, KeyType _k)
+  //inline void treap_t<KeyType>::internal_remove(std::shared_ptr<treap_node<KeyType> > & node, KeyType _k)
   {
     if (!node) {
       return;
@@ -119,9 +254,9 @@ namespace treap
   }
 
   template<class KeyType>
-  inline typename treap<KeyType>::shared_node treap<KeyType>::remove(treap<KeyType>::shared_node & root, KeyType _k)
+  inline typename treap_t<KeyType>::shared_node treap_t<KeyType>::remove(treap_t<KeyType>::shared_node & root, const KeyType & _k)
   // inline std::shared_ptr<treap_node<KeyType> >
-  // treap<KeyType>::remove(std::shared_ptr<treap_node<KeyType> > & root, KeyType _k)
+  // treap_t<KeyType>::remove(std::shared_ptr<treap_node<KeyType> > & root, KeyType _k)
   {
     internal_remove(root, _k);
     return root;
@@ -138,12 +273,13 @@ namespace treap
   }
 
   template<class KeyType>
-  inline typename treap<KeyType>::node * treap<KeyType>::find(const shared_node & root, KeyType _k, bool returns_last_node)
-  // inline treap_node<KeyType> * treap<KeyType>::find(const std::shared_ptr<treap_node<KeyType> > & root, KeyType _k, bool returns_last_node)
+  inline typename treap_t<KeyType>::node * treap_t<KeyType>::find(const shared_node & root, const KeyType & _k, bool returns_last_node)
+  // inline treap_node<KeyType> * treap_t<KeyType>::find(const std::shared_ptr<treap_node<KeyType> > & root, KeyType _k, bool returns_last_node)
   {
     node * node, * prev;
+    // !comp(node->key, _k) && !comp(_k, node->key);
     for(node = root.get();
-        node && (node->key != _k);
+        node && (comp(node->key, _k) || comp(_k, node->key)); // (node->key != _k);
         prev = node, node = comp(node->key, _k) ? node->right_child.get() : node->left_child.get()) {}
     
     if (!node && returns_last_node) {
@@ -154,11 +290,11 @@ namespace treap
 
 
   template<class KeyType>
-  inline void treap<KeyType>::split(const shared_node & node,
+  inline void treap_t<KeyType>::split(const shared_node & node,
                                     KeyType split_key,
-                                    treap<KeyType>::shared_node & out_left,
-                                    treap<KeyType>::shared_node & out_right)
-  // inline void treap<KeyType>::split(const std::shared_ptr<treap_node<KeyType> > & node,
+                                    treap_t<KeyType>::shared_node & out_left,
+                                    treap_t<KeyType>::shared_node & out_right)
+  // inline void treap_t<KeyType>::split(const std::shared_ptr<treap_node<KeyType> > & node,
   //                                        KeyType split_key,
   //                                        std::shared_ptr<treap_node<KeyType> > & out_left,
   //                                        std::shared_ptr<treap_node<KeyType> > & out_right)
@@ -192,9 +328,9 @@ namespace treap
   }
 
   template<class KeyType>
-  inline typename treap<KeyType>::shared_node treap<KeyType>::merge(const shared_node & left, const shared_node & right)
+  inline typename treap_t<KeyType>::shared_node treap_t<KeyType>::merge(const shared_node & left, const shared_node & right)
   // inline std::shared_ptr<treap_node<KeyType> >
-  // treap<KeyType>::merge(const std::shared_ptr<treap_node<KeyType> > & left,
+  // treap_t<KeyType>::merge(const std::shared_ptr<treap_node<KeyType> > & left,
   //                       const std::shared_ptr<treap_node<KeyType> > & right)
   {
     if (!left) {
@@ -217,11 +353,16 @@ namespace treap
 
   //template<class KeyType> template<class Func>
   template<class KeyType> template<class Func>
-  void treap<KeyType>::for_each(const shared_node & root, Func f)
-  // void treap<KeyType>::for_each(const std::shared_ptr<treap_node<KeyType> > & root, Func f)
+  void treap_t<KeyType>::for_each(Func f)
+  // void treap_t<KeyType>::for_each(const std::shared_ptr<treap_node<KeyType> > & root, Func f)
   {
-    if (root) {
-      for(auto curr_node = root->min_node;curr_node; curr_node = curr_node->next_node) {
+    if (root_node) {
+      // auto curr_node = root_node->min_node;
+      // do {
+      //   f(*curr_node);
+      //   curr_node = curr_node->next_node;
+      // } while (curr_node != root_node->min_node);
+      for(auto curr_node = root_node->min_node;curr_node; curr_node = curr_node->next_node) {
         f(*curr_node);
       }
     }

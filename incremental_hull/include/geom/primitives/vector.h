@@ -31,6 +31,14 @@ namespace structures {
 
     inline vector_type const operator - (vector_type const & v) { return vector_type(-v.x, -v.y); }
 
+    inline int64 square_abs (const  vector_type & v)
+    {
+      int64 x = v.x, y = v.y;
+      return x*x + y*y;
+    }
+      
+      
+
 }}
 
 #endif /* _VECTOR_H_ */

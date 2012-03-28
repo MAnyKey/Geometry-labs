@@ -38,7 +38,7 @@ namespace treap
   extern size_t indent;
 
   template<class KeyType>
-  class treap;
+  class treap_t;
   
   template<class KeyType>
   struct treap_node
@@ -159,7 +159,7 @@ namespace treap
     treap_node * min_node;
     treap_node * max_node;
 
-    friend class treap<KeyType>;
+    friend class treap_t<KeyType>;
     
   };
 
@@ -332,6 +332,8 @@ namespace treap
     } else {
       this->next_node = nullptr;
     }
+    // this->min_node->prev_node = this->max_node;
+    // this->max_node->next_node = this->min_node;
   }
 
   template<class KeyType>
@@ -345,6 +347,8 @@ namespace treap
     } else {
       this->prev_node = nullptr;
     }
+    // this->min_node->prev_node = this->max_node;
+    // this->max_node->next_node = this->min_node;
   }
 }
 
