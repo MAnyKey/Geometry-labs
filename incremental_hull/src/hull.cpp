@@ -32,118 +32,131 @@ namespace geom {
     const hull_builder::treap_node * hull_builder::left_search(const point_type & p, const hull_builder::treap_node * node,
                                                  const hull_builder::treap_node * upper_bound, const hull_builder::treap_node * lower_bound)
     {
-      std::cout << "bebebe!" << std::endl;
-      while (true) {
-        auto cls = classify(p, node, upper_bound, lower_bound);
-        switch (cls) {
-        case class_semicollinear_prev:
-        case class_support_right:
-          return node;
-        case class_reflex:
-        case class_semicollinear_next:
-        case class_collinear:
-          {
-            const auto & ref = node->right();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          }
-          break;
-        case class_support_left:
-          if (rotation::ROTATION_NONE != rotation::rotation(get_prev(node, lower_bound)->value(),
-                                                            node->value(),
-                                                            get_next(node, upper_bound)->value())) {
-            const auto & ref = node->right();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          } else {
-            if (node->right()) {
-              node = node->right().get();
-            } else if (node->left()) {
-              node = node->left().get();
-            } else {
-              assert(false);
-            }
-          }
-          break;
+      std::clog << __FUNCTION__ << " p: " << p << std::endl;
+      while(node) {
+        std::clog << __FUNCTION__ << " node: " << node->value() << std::endl;
+        const auto node_cls = classify(p, node, upper_bound, lower_bound);
+        const auto min_cls = classify(p, node->min(), upper_bound, lower_bound);
+        const auto rot = rotation::rotation(p, node->min()->value(), node->value());
 
-        case class_concave:
-          {
-            const auto & ref = node->left();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          }
-          break;
+        if (node_cls & (class_support_right | class_semicollinear_prev_right)) {
+          return node;
         }
+
+        if ((rotation::ROTATION_RIGHT == rot && class_concave != min_cls) ||
+            (rotation::ROTATION_LEFT  == rot && class_concave == node_cls)) {
+          node = node->left().get();
+        } else {
+          node = node->right().get();
+        }
+        
+        // else if (node_cls & (class_support_left | class_collinear | class_semicollinear_prev_next |
+        //                        class_semicollinear_next_left | class_semicollinear_next_right) ) {
+        //   node = node->right().get();
+        //   continue;
+        // }
+
+        // if ((rotation::ROTATION_RIGHT == rot && class_concave != min_cls) ||
+        //     (rotation::ROTATION_LEFT  == rot && class_reflex  != node_cls)) {
+        //   node = node->left().get();
+        // } else {
+        //   node = node->right().get();
+        // }
+        // // if (rotation::ROTATION_RIGHT == rot) {
+        // //   if (class_concave == min_cls) {
+        // //     node = node->right().get(); // #7, 8
+        // //   } else {
+        // //     // class_concave == node_cls - implicit
+        // //     assert(node_cls != class_reflex);
+        // //     assert(node_cls != class_support_left);
+        // //     node = node->left().get(); // #6
+        // //   }
+        // // } else if (rotation::ROTATION_LEFT == rot) {
+        // //   if (class_reflex == node_cls) {
+        // //     node = node->right().get();  // #2, 3
+        // //   } else {
+        // //     node = node->left().get(); // #1, 4
+        // //   }
+        // // } else {
+        // //   node = node->right.get();
+        // // }
       }
-      // case CLS_SUPPORT:
-      //   return node;
-      // case CLS_REFLEX:
-      //   return left_search(p, node->left() ? node->left().get() : node->prev());
-      // case CLS_CONCAVE:
-      //   return left_search(p, node->right() ? node->right().get() : node->next());
-      // }
+      return nullptr;
     }
+
 
     const hull_builder::treap_node * hull_builder::right_search(const point_type & p, const hull_builder::treap_node * node,
                                                   const hull_builder::treap_node * upper_bound, const hull_builder::treap_node * lower_bound)
     {
-      std::cout << "bebebe!" << std::endl;
-      while (true) {
-        auto cls = classify(p, node, upper_bound, lower_bound);
-        switch (cls) {
-        case class_support_left:
-        case class_semicollinear_next:
+      std::clog << __FUNCTION__ << " p: " << p << std::endl;
+      while(node) {
+        std::clog << __FUNCTION__ << " node: " << node->value() << std::endl;
+        const auto node_cls = classify(p, node, upper_bound, lower_bound);
+        const auto min_cls = classify(p, node->min(), upper_bound, lower_bound);
+        const auto rot = rotation::rotation(p, node->min()->value(), node->value());
+
+        if (node_cls & (class_support_left | class_semicollinear_next_left)) {
           return node;
-        case class_reflex:
-        case class_semicollinear_prev:
-        case class_collinear:
-          {
-            const auto & ref = node->left();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          }
-          break;
-        case class_support_right:
-          if (rotation::ROTATION_NONE != rotation::rotation(get_prev(node, lower_bound)->value(),
-                                                            node->value(),
-                                                            get_next(node, upper_bound)->value())) {
-            const auto & ref = node->left();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          } else {
-            if (node->left()) {
-              node = node->left().get();
-            } else if (node->right()) {
-              node = node->right().get();
-            } else {
-              assert(false);
-            }
-          }
-          break;
-          // return right_search(p, node->left(), upper_bound, lower_bound);
-        case class_concave:
-          {
-            const auto & ref = node->right();
-            if (!ref) {
-              return nullptr;
-            }
-            node = ref.get();
-          }
-          break;
-          // return right_search(p, node->right(), upper_bound, lower_bound);
         }
+
+        if ((class_reflex != min_cls) && (class_reflex != node_cls)) {
+          node = node->right().get();
+        } else {
+          node = node->left().get();
+        }
+        
+        // else if (node_cls & (class_collinear | class_semicollinear_prev_next |
+        //                        class_semicollinear_next_left | class_semicollinear_next_right) ) {
+        //   node = node->right().get();
+        //   continue;
+        // }
+
+        // if ((rotation::ROTATION_RIGHT == rot && class_concave != min_cls) ||
+        //     (rotation::ROTATION_LEFT  == rot && class_reflex  != node_cls)) {
+        //   node = node->left().get();
+        // } else {
+        //   node = node->right().get();
+        // }
       }
+      return nullptr;
     }
+
+    // std::pair<const hull_builder::treap_node *, const hull_builder::treap_node *>
+    // hull_builder::search_edges(const point_type & p, const hull_builder::treap_node * node,
+    //                            const hull_builder::treap_node * upper_bound, const hull_builder::treap_node * lower_bound)
+    // {
+    //   const auto node_cls = classify(p, node, upper_bound, lower_bound);
+    //   const auto min_cls = classify(p, node->min(), upper_bound, lower_bound);
+    //   const auto rot = rotation::rotation(p, node->min()-value(), node->value());
+    //   if (rotation::ROTATION_RIGHT != rot) {
+    //     if (class_concave == min_cls) {
+    //       if (class_concave == node_cls) {
+    //         return search_edges(p, node->left(), upper_bound, lower_bound); // #1
+    //       } else {
+
+    //       }
+    //     } else {
+    //       if (class_reflex == node_cls) {
+    //         return search_edges(p, node->right(), upper_bound, lower_bound); // #3 check_min
+    //       } else {
+
+    //       }
+    //     }
+    //   } else { // ROTATION_RIGHT == rot
+    //     if (class_reflex == min_cls) {
+    //       if (class_reflex == node_cls) {
+    //         return search_edges(p, node->left(), upper_bound, lower_bound); // #5
+    //       }
+    //     } else {
+    //       if (class_concave == node_cls) {
+
+    //       } else {
+
+    //       }
+    //     }
+    //   }
+    // }
+   
       
 // std::pair<const treap_node *, const treap_node *> search_edges(const point_type & p, const shared_treap & node)
 // {

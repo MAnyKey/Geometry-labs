@@ -30,7 +30,7 @@ namespace treap
 
     void shrink_to(const node * boundary)
     {
-      std::clog << __FUNCTION__ << " boundary: " << boundary->value(), << std::endl;
+      std::clog << __FUNCTION__ << " boundary: " << boundary->value() << std::endl;
       if (boundary->prev()) {
         shared_node junk, t;
         std::clog << "bounday prev(): " << boundary->prev()->value() << std::endl;

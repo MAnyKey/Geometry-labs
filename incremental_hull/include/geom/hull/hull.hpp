@@ -68,14 +68,19 @@ namespace geom {
       
 
       enum vertex_class {
-        class_semicollinear_prev = 0x01,
-        class_semicollinear_next = 0x02,
-        class_collinear          = 0x03,
-        class_support_left       = 0x04,
-        class_support_right      = 0x08,
+        class_reflex                   = 0x01,
+        class_concave                  = 0x02,
         
-        class_reflex             = 0x10,
-        class_concave            = 0x20
+        class_semicollinear_prev_left  = 0x04,
+        class_semicollinear_prev_right = 0x08,
+        class_semicollinear_next_left  = 0x10,
+        class_semicollinear_next_right = 0x20,
+        class_collinear                = 0x40,
+        
+        class_support_left             = 0x80,
+        class_support_right            = 0x100
+        
+        
       };
 
       static vertex_class classify_point(const point_type & source,
@@ -83,8 +88,11 @@ namespace geom {
                                   const point_type & prev_point,
                                   const point_type & next_point)
       {
+        std::clog << __FUNCTION__ << " source: " << source << " test_point: " << test_point
+                  << " prev_point: " << prev_point << " next_point: " << next_point << std::endl;
         const auto next_rot = rotation::rotation(source, test_point, next_point);
         const auto prev_rot = rotation::rotation(source, test_point, prev_point);
+        std::clog << __FUNCTION__ << " next_rot: " << next_rot << " prev_rot: " << prev_rot << std::endl;
         if (next_rot == prev_rot) {
           switch (next_rot) {
           case rotation::ROTATION_NONE:
@@ -96,10 +104,9 @@ namespace geom {
           }
         }
         if (prev_rot == rotation::ROTATION_NONE) {
-          return class_semicollinear_prev;
-        }
-        if (next_rot == rotation::ROTATION_NONE) {
-          return class_semicollinear_next;
+          return (next_rot == rotation::ROTATION_LEFT) ? class_semicollinear_prev_left : class_semicollinear_prev_right;
+        } else if (next_rot == rotation::ROTATION_NONE) {
+          return (prev_rot == rotation::ROTATION_LEFT) ? class_semicollinear_next_left : class_semicollinear_next_right;
         }
         const auto poly_rotation = rotation::rotation(prev_point, test_point, next_point);
         if (next_rot == poly_rotation) {
@@ -153,7 +160,9 @@ namespace geom {
         // const auto prev_node = (node->prev()) ? node->prev() : lower_bound;
         const auto next_node = get_next(node, upper_bound);
         const auto prev_node = get_prev(node, lower_bound);
-        return classify_point(p, node->value(), prev_node->value(), next_node->value());
+        const auto cls = classify_point(p, node->value(), prev_node->value(), next_node->value());
+        std::clog << __FUNCTION__ << ": cls: " << cls << std::endl;
+        return cls;
       }
 
       enum position_type {
