@@ -2,13 +2,15 @@
 TEMPLATE = app
 TARGET = hull
 
-CONFIG += QtGui debug
-CONFIG -= release
+CONFIG += QtGui
+
+CONFIG -= debug
+CONFIG += release
 QT += opengl
 
 OBJECTS_DIR = bin
 
-QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic-errors -g -pg -O0
+QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic-errors -g -DNDEBUG
 
 DEPENDPATH += src \
               include \
@@ -25,6 +27,6 @@ INCLUDEPATH += . \
 
 # Input
 
-SOURCES += main.cpp treap_node.cpp hull.cpp
+SOURCES += main.cpp treap_node.cpp hull.cpp hull_checks.cpp
 
 LIBS += -Llib -lvisualization
