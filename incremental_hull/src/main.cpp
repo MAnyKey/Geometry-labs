@@ -54,7 +54,7 @@ bool operator!=(const random_point_iter & lh, const random_point_iter & rh)
 
 void batch()
 {
-  const size_t max_points = 2000000;
+  const size_t max_points = 1000000;
   hull_builder hb;
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -76,6 +76,7 @@ void batch()
 
 void test_builder()
 {
+  srand(time(0));
   for(size_t i = 0; i < 5; i++) {
     batch();
   }
