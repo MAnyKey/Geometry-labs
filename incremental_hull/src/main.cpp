@@ -41,7 +41,7 @@ private:
   
   static int get_coord()
   {
-    static const int max_coord = 1 << 20;
+    static const int max_coord = 1 << 25;
     return (rand() % (max_coord * 2)) - max_coord;
   }
 
@@ -87,7 +87,7 @@ void test_builder()
 {
   // srand(time(0));
   srand(239);
-  for(size_t i = 0; i < 15; i++) {
+  for(size_t i = 0; i < 100; i++) {
     std::cout << "Test " << (i + 1) << ": start" << std::endl;
     batch(false);
   }

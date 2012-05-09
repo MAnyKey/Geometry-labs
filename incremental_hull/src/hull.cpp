@@ -94,6 +94,7 @@ namespace geom {
         } else {
           node = node->right().get();
         }
+        
       }
       return nullptr;
     }
@@ -111,11 +112,11 @@ namespace geom {
           lower_hull.clear();
           const auto & right = std::max(bootstrap.front(), p);
           const auto & left = std::min(bootstrap.front(), p);
-          upper_hull.insert(right, right.y);
-          lower_hull.insert(left, right.y);
+          upper_hull.insert(right);
+          lower_hull.insert(left);
         } else {
-          upper_hull.insert(p, p.y);
-          lower_hull.insert(p, p.y);
+          upper_hull.insert(p);
+          lower_hull.insert(p);
         }
         bootstrap.push_back(p);
         return;
@@ -170,7 +171,7 @@ namespace geom {
       } else {
         throw std::logic_error("No edges found. All points on one line");
       }
-      hull_chain.insert(p, p.y);
+      hull_chain.insert(p);
     }
       
 
@@ -193,8 +194,8 @@ namespace geom {
       } else {
         throw std::logic_error("Not all edges found. All points on one line.");
       }
-      left_hull_chain.insert(p, p.y);
-      right_hull_chain.insert(p, p.y);
+      left_hull_chain.insert(p);
+      right_hull_chain.insert(p);
     }
 
     hull_builder::vertex_class hull_builder::classify_point(const point_type & source,

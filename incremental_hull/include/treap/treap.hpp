@@ -21,7 +21,7 @@ namespace treap
     {}
 
         
-    void insert(const KeyType & key, int priority)
+    void insert(const KeyType & key, int priority = priority_source())
     {
       add(root_node, key, priority);
     }
