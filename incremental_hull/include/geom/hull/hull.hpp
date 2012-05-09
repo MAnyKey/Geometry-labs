@@ -11,6 +11,8 @@
 #include "geom/primitives/vector.h"
 #include "geom/rotation.hpp"
 
+#include "defines.h"
+
 namespace geom {
   namespace hull {
 
@@ -97,9 +99,9 @@ namespace geom {
         const auto next_node = get_next(node, upper_bound);
         const auto prev_node = get_prev(node, lower_bound);
         const auto cls = classify_point(p, node->value(), prev_node->value(), next_node->value());
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
         std::clog << __FUNCTION__ << ": cls: " << cls << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
         return cls;
       }
 

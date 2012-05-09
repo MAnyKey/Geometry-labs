@@ -11,6 +11,8 @@
 #include "geom/primitives/point.h"
 #include "geom/hull/hull.hpp"
 
+#include "defines.h"
+
 using visualization::viewer_adapter;
 using visualization::drawer_type;
 
@@ -77,17 +79,13 @@ bool incremental_hull_window::on_double_click(const point_type & pt)
   builder.add_point(pt);
   hull.clear();
   builder.get_current_hull(back_inserter(hull));
-  #ifndef NDEBUG
-std::clog << "Hull: " << std::endl;
-#endif // NDEBUG
+#ifdef LOG_ENABLED
+  std::clog << "Hull: " << std::endl;
   for(const auto & p : hull) {
-    #ifndef NDEBUG
-std::clog << p << ' ';
-#endif // NDEBUG
+    std::clog << p << ' ';
   }
-  #ifndef NDEBUG
-std::clog << std::endl;
-#endif // NDEBUG
+  std::clog << std::endl;
+#endif // LOG_ENABLED
   return true;
 }
   

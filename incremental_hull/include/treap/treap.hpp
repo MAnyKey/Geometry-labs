@@ -5,6 +5,8 @@
 
 #include "treap/treap_node.hpp"
 
+#include "defines.h"
+
 namespace treap
 {
   template<class KeyType>
@@ -19,9 +21,9 @@ namespace treap
     {}
 
         
-    void insert(const KeyType & key)
+    void insert(const KeyType & key, int priority)
     {
-      add(root_node, key);
+      add(root_node, key, priority);
     }
     
     node * find(const KeyType & _k, bool returns_last_node = false)
@@ -31,18 +33,18 @@ namespace treap
 
     void shrink_to(const node * boundary)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " boundary: " << boundary->value() << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       if (boundary->prev()) {
         shared_node junk, t;
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
         std::clog << "bounday prev(): " << boundary->prev()->value() << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
         
         split(root_node, boundary->prev()->value(), junk, t);
         
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
         std::clog << "t: ";
         node::print_node_reference(std::clog, t);
         std::clog << std::endl;
@@ -50,19 +52,19 @@ namespace treap
         std::clog << "junk: ";
         node::print_node_reference(std::clog, junk);
         std::clog << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
         root_node = t;
       }
     }
       
     void shrink_from(const node * boundary)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " boundary: " << boundary->value() << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       shared_node junk, t;
       split(root_node, boundary->value(), t, junk);
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << "t: ";
       node::print_node_reference(std::clog, t);
       std::clog << std::endl;
@@ -70,27 +72,27 @@ namespace treap
       std::clog << "junk: ";
       node::print_node_reference(std::clog, junk);
       std::clog << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       root_node = t;
     }
       
     void shrink_between(const node * left, const node * right)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " left: " << left->value() << " right: " << right->value() << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       
       // [begin... left ... right end]
       assert(comp(left->value(), right->value()));
       shared_node tleft, tright, t, junk;
       
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << "right->prev() " << right->prev()->value() << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       
       split(root_node, right->prev()->value(), t, tright);
       
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << "tright: ";
       node::print_node_reference(std::clog, tright);
       std::clog << std::endl;
@@ -98,11 +100,11 @@ namespace treap
       std::clog << "t: ";
       node::print_node_reference(std::clog, t);
       std::clog << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
 
       split(t, left->value(), tleft, junk);
       
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << "tleft: ";
       node::print_node_reference(std::clog, tleft);
       std::clog << std::endl;
@@ -110,7 +112,7 @@ namespace treap
       std::clog << "junk: ";
       node::print_node_reference(std::clog, junk);
       std::clog << std::endl;
-#endif // NDEBUG
+#endif // LOG_ENABLED
       
       root_node = merge(tleft, tright);
     }
@@ -143,7 +145,7 @@ namespace treap
       return rand();
     }
 
-    shared_node   add       (shared_node & root, const KeyType & _k, int priority = priority_source());
+    shared_node   add       (shared_node & root, const KeyType & _k, int priority);
     shared_node   remove    (shared_node & root, const KeyType & _k);
            node * find(const shared_node & root, const KeyType & _k, bool returns_last_node = false);
     

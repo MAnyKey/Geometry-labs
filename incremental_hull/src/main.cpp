@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <ctime>
 #include <QApplication>
 
 #include "window/window.hpp"
@@ -52,9 +54,16 @@ bool operator!=(const random_point_iter & lh, const random_point_iter & rh)
   return !(lh == rh);
 }
 
-void batch()
+void batch(bool fake)
 {
   const size_t max_points = 1000000;
+  // if (fake) {
+  //   auto last = random_point_iter();
+  //   for (auto first = random_point_iter(max_points); first != last; ++first) {
+  //     auto p = *first;
+  //   }
+  //   return;
+  // }
   hull_builder hb;
 
   auto start = std::chrono::high_resolution_clock::now();
@@ -76,9 +85,11 @@ void batch()
 
 void test_builder()
 {
-  srand(time(0));
-  for(size_t i = 0; i < 5; i++) {
-    batch();
+  // srand(time(0));
+  srand(239);
+  for(size_t i = 0; i < 15; i++) {
+    std::cout << "Test " << (i + 1) << ": start" << std::endl;
+    batch(false);
   }
 }
 

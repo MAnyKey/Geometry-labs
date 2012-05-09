@@ -1,15 +1,17 @@
 #include <stdexcept>
 
 #include "geom/hull/hull.hpp"
-
+#include "defines.h"
 
 template<class T>
 struct logger {
 
-  logger(T & t)
-    :ref(t)
+  explicit logger(T & t, const std::string str = "")
+    :ref(t), name(str)
   {
-    std::clog << "(before): " << ref << std::endl;
+#ifdef LOG_ENABLED
+    std::clog << name << " (before): " << ref << std::endl;
+#endif
   }
 
   logger(const logger &) = delete;
@@ -19,10 +21,13 @@ struct logger {
 
   ~logger()
   {
-    std::clog << "(after): " << ref << std::endl;
+#ifdef LOG_ENABLED
+    std::clog << name <<  " (after): " << ref << std::endl;
+#endif
   }
 
   T & ref;
+  std::string name;
 };
 
 
@@ -32,11 +37,11 @@ namespace geom {
     const hull_builder::treap_node * hull_builder::left_search(const point_type & p, const hull_builder::treap_node * node,
                                                  const hull_builder::treap_node * upper_bound, const hull_builder::treap_node * lower_bound)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << std::endl;
 #endif //  NDEBUG
       while(node) {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
         std::clog << __FUNCTION__ << " node: " << node->value() << std::endl;
 #endif //  NDEBUG
         const auto node_cls = classify(p, node, upper_bound, lower_bound);
@@ -65,11 +70,11 @@ namespace geom {
                                                                 const hull_builder::treap_node * upper_bound,
                                                                 const hull_builder::treap_node * lower_bound)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << std::endl;
 #endif //  NDEBUG
       while(node) {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
         std::clog << __FUNCTION__ << " node: " << node->value() << std::endl;
 #endif //  NDEBUG
         const auto node_cls = classify(p, node, upper_bound, lower_bound);
@@ -83,10 +88,11 @@ namespace geom {
           return node;
         }
 
-        if ((class_reflex != min_cls) && (class_reflex != node_cls) && (rotation::ROTATION_LEFT != rot)) {
-          node = node->right().get();
-        } else {
+        if ((class_reflex == min_cls) || ((class_reflex | class_semicollinear_prev_left) & node_cls) || (rotation::ROTATION_LEFT == rot)){
+            // (class_semicollinear_prev_left == node_cls && class_semicollinear_next_left == min_cls && rotation::ROTATION_NONE == rot)) {
           node = node->left().get();
+        } else {
+          node = node->right().get();
         }
       }
       return nullptr;
@@ -94,19 +100,22 @@ namespace geom {
 
     void hull_builder::add_point(const point_type & p)
     {
-#ifndef NDEBUG
-      logger<decltype(upper_hull)> up_log(upper_hull);
-      logger<decltype(lower_hull)> low_log(lower_hull);
+#ifdef LOG_ENABLED
+      std::cerr << __FUNCTION__ << ": " << p << std::endl;
+      logger<decltype(upper_hull)> up_log(upper_hull, "upper_hull");
+      logger<decltype(lower_hull)> low_log(lower_hull, "lower_hull");
 #endif 
       if (bootstrap.size() < 2) {
         if (bootstrap.size() && bootstrap.front().x == p.x) {
           upper_hull.clear();
           lower_hull.clear();
-          upper_hull.insert(std::max(bootstrap.front(), p));
-          lower_hull.insert(std::min(bootstrap.front(), p));
+          const auto & right = std::max(bootstrap.front(), p);
+          const auto & left = std::min(bootstrap.front(), p);
+          upper_hull.insert(right, right.y);
+          lower_hull.insert(left, right.y);
         } else {
-          upper_hull.insert(p);
-          lower_hull.insert(p);
+          upper_hull.insert(p, p.y);
+          lower_hull.insert(p, p.y);
         }
         bootstrap.push_back(p);
         return;
@@ -116,7 +125,7 @@ namespace geom {
       auto upper_point = upper_hull.find(p, true);
       auto lower_point = lower_hull.find(p, true);
       auto pos = check_position(p, upper_point, lower_point);
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << "pos: " << pos << std::endl;
 #endif //  NDEBUG
       switch (pos) {
@@ -140,7 +149,7 @@ namespace geom {
         put_point(p, lower_hull, upper_hull);
         break;
       }
-      assert(verify_hull());
+      // assert(verify_hull());
       // if (!verify_hull()) {
       //   throw std::logic_error("Bad hull");
       // }
@@ -161,7 +170,7 @@ namespace geom {
       } else {
         throw std::logic_error("No edges found. All points on one line");
       }
-      hull_chain.insert(p);
+      hull_chain.insert(p, p.y);
     }
       
 
@@ -184,8 +193,8 @@ namespace geom {
       } else {
         throw std::logic_error("Not all edges found. All points on one line.");
       }
-      left_hull_chain.insert(p);
-      right_hull_chain.insert(p);
+      left_hull_chain.insert(p, p.y);
+      right_hull_chain.insert(p, p.y);
     }
 
     hull_builder::vertex_class hull_builder::classify_point(const point_type & source,
@@ -193,13 +202,13 @@ namespace geom {
                                                             const point_type & prev_point,
                                                             const point_type & next_point)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " source: " << source << " test_point: " << test_point
                 << " prev_point: " << prev_point << " next_point: " << next_point << std::endl;
 #endif // NDEBUG
       const auto next_rot = rotation::rotation(source, test_point, next_point);
       const auto prev_rot = rotation::rotation(source, test_point, prev_point);
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " next_rot: " << next_rot << " prev_rot: " << prev_rot << std::endl;
 #endif // NDEBUG
       if (next_rot == prev_rot) {
@@ -228,7 +237,7 @@ namespace geom {
     hull_builder::position_type
     hull_builder::check_position_vertex_vertex(const point_type & p, const point_type & upper_point, const point_type & lower_point)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << " upper: " << upper_point << " lower: " << lower_point << std::endl;
 #endif
       if (p.y > upper_point.y) {
@@ -243,7 +252,7 @@ namespace geom {
     hull_builder::position_type
     hull_builder::check_position_vertex_edge(const point_type & p, const point_type & upper_point, const treap_node * lower_node)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << " upper: " << upper_point << " lower: " << lower_node->value() << std::endl;
 #endif
       if (p.y > upper_point.y) {
@@ -282,7 +291,7 @@ namespace geom {
     hull_builder::position_type
     hull_builder::check_position_edge_vertex(const point_type & p, const treap_node * upper_node, const point_type & lower_point)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << " upper: " << upper_node->value() << " lower: " << lower_point << std::endl;
 #endif
       if (p.y < lower_point.y) {
@@ -293,7 +302,7 @@ namespace geom {
         if (upper_node->next()) {
           const auto & next_upper = upper_node->next()->value();
           const auto rot = rotation::rotation(upper_point, next_upper, p);
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
           std::clog << "next_upper: " << next_upper << " rot: " << rot << std::endl;
 #endif
           if (rotation::ROTATION_LEFT == rot) {
@@ -302,7 +311,7 @@ namespace geom {
             return position_in_on;
           }
         } else {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
           std::clog << "Unused branch of " << __FUNCTION__ << ' ' << __FILE__  " (" << __LINE__ << ") " << std::endl;
 #endif
           return position_left;
@@ -311,7 +320,7 @@ namespace geom {
         if (upper_node->prev()) {
           const auto & prev_upper = upper_node->prev()->value();
           const auto rot = rotation::rotation(upper_point, prev_upper, p);
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
           std::clog << "prev_upper: " << prev_upper << " rot: " << rot << std::endl;
 #endif
           if (rotation::ROTATION_RIGHT == rot) {
@@ -320,7 +329,7 @@ namespace geom {
             return position_in_on;
           }
         } else {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
           std::clog << "Unused branch of " << __FUNCTION__ << ' ' << __FILE__  " (" << __LINE__ << ") " << std::endl;
 #endif
           return position_left;
@@ -333,7 +342,7 @@ namespace geom {
                                        const point_type & up_left, const point_type & up_right,
                                        const point_type & low_left, const point_type & low_right)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << " up_left: " << up_left << " up_right: " << up_right
                 << " low_left: " << low_left << " low_right: " << low_right << std::endl;
 #endif // NDEBUG
@@ -350,7 +359,7 @@ namespace geom {
     hull_builder::position_type
     hull_builder::check_position_edge_edge(const point_type & p, const treap_node * upper_node, const treap_node * lower_node)
     {
-#ifndef NDEBUG
+#ifdef LOG_ENABLED
       std::clog << __FUNCTION__ << " p: " << p << " upper: " << upper_node->value() << " lower: " << lower_node->value() << std::endl;
 #endif // NDEBUG
       point_type upper_point = upper_node->value();

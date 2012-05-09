@@ -5,7 +5,19 @@ namespace geom {
 
     bool hull_builder::verify_hull() const
     {
-      return (verify_min_max() && verify_rotation() && verify_self_intersection());
+      const bool min_max = verify_min_max();
+      if (!min_max) {
+        std::cout << __FUNCTION__ << ": verify min_max has failed\n";
+      }
+      const bool rotation = verify_rotation();
+      if (!rotation) {
+        std::cout << __FUNCTION__ << ": verify min_max has failed\n";
+      }
+      const bool self_intersect = verify_self_intersection();
+      if (!self_intersect) {
+        std::cout << __FUNCTION__ << ": verify self intersect has failed\n";
+      }
+      return (min_max && rotation && self_intersect);
     }
 
     bool hull_builder::verify_min_max() const
